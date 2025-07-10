@@ -14,6 +14,7 @@ PROJECT_ID = os.environ.get('GCP_PROJECT')
 
 # --- Flask App Initialization ---
 app = Flask(__name__)
+
 # --- DEBUGGING: PRINT ALL ENVIRONMENT VARIABLES ---
 print("--- ENVIRONMENT VARIABLES ---")
 import os
