@@ -90,17 +90,17 @@ def authorize():
 def oauth2callback():
     """Handles the redirect from Google's consent screen."""
     try:
-        # --- MOVED THIS LINE INSIDE THE TRY BLOCK ---
-        flow = get_oauth_flow() 
-
+        flow = get_oauth_flow()
         flow.fetch_token(authorization_response=request.url)
         credentials = flow.credentials
         save_credentials_to_secret(credentials)
         return "<h1>Authorization successful!</h1><p>You can close this tab and return to Gemini.</p>"
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return f"<h1>Error during authorization:</h1><p>A server error occurred. Please check the logs.</p>", 500
-
+        # This will now display the full error in the browser.
+        import traceback
+        error_details = traceback.format_exc()
+        return f"<h1>An Error Occurred</h1><h2>Details:</h2><pre>{error_details}</pre>", 500
+    
 @app.route('/edit-markdown', methods=['POST'])
 def edit_markdown_file():
     """The main endpoint that Gemini will call."""
