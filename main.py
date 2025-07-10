@@ -89,15 +89,16 @@ def authorize():
 @app.route('/oauth2callback')
 def oauth2callback():
     """Handles the redirect from Google's consent screen."""
-    flow = get_oauth_flow()
     try:
+        # --- MOVED THIS LINE INSIDE THE TRY BLOCK ---
+        flow = get_oauth_flow() 
+
         flow.fetch_token(authorization_response=request.url)
         credentials = flow.credentials
         save_credentials_to_secret(credentials)
         return "<h1>Authorization successful!</h1><p>You can close this tab and return to Gemini.</p>"
     except Exception as e:
-        # This line will print the specific error to your Cloud Run logs.
-        print(f"An error occurred during token exchange or saving: {e}")
+        print(f"An error occurred: {e}")
         return f"<h1>Error during authorization:</h1><p>A server error occurred. Please check the logs.</p>", 500
 
 @app.route('/edit-markdown', methods=['POST'])
