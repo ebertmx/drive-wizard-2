@@ -6,25 +6,17 @@ from google.cloud import secretmanager
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+from google.auth.transport.requests import Request
+from io import BytesIO
+from googleapiclient.http import MediaIoBaseUpload
 
 # --- Configuration ---
 SECRET_NAME = "gemini-drive-token"
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
-PROJECT_ID = os.environ.get('GCP_PROJECT') 
 
 # --- Flask App Initialization ---
 app = Flask(__name__)
 
-# --- DEBUGGING: PRINT ALL ENVIRONMENT VARIABLES ---
-print("--- ENVIRONMENT VARIABLES ---")
-import os
-for key, value in os.environ.items():
-    print(f"{key}: {value}")
-print("-----------------------------")
-# --- END DEBUGGING ---
-
-# --- Helper Functions ---
-def get_secret_manager_client():
 # --- Helper Functions ---
 def get_secret_manager_client():
     """Initializes the Secret Manager client."""
@@ -33,10 +25,8 @@ def get_secret_manager_client():
 def get_credentials_from_secret():
     """Retrieves credentials from Secret Manager."""
     client = get_secret_manager_client()
-    # The project ID is needed to construct the full secret path.
     project_id = os.environ.get('GCP_PROJECT')
     if not project_id:
-        # Fallback or error if project ID is not set in the environment
         raise ValueError("GCP_PROJECT environment variable not set.")
         
     secret_version_name = f"projects/{project_id}/secrets/{SECRET_NAME}/versions/latest"
@@ -46,7 +36,7 @@ def get_credentials_from_secret():
         creds_dict = json.loads(creds_json)
         return Credentials.from_authorized_user_info(creds_dict, SCOPES)
     except Exception:
-        return None # Secret not found or other error
+        return None
 
 def save_credentials_to_secret(credentials):
     """Saves credentials to Secret Manager, disabling old versions."""
@@ -58,16 +48,14 @@ def save_credentials_to_secret(credentials):
     secret_path = f"projects/{project_id}/secrets/{SECRET_NAME}"
     payload = credentials.to_json().encode("UTF-8")
     
-    # Disable all existing enabled versions to ensure only one is latest
     try:
         versions = client.list_secret_versions(request={"parent": secret_path, "filter": "state=ENABLED"})
         for version in versions:
             client.disable_secret_version(request={"name": version.name})
     except Exception:
-        # This can fail if there are no versions yet, which is fine.
+        # Fails if no versions exist yet, which is fine.
         pass
 
-    # Add the new secret version
     client.add_secret_version(parent=secret_path, payload={"data": payload})
 
 
@@ -108,7 +96,9 @@ def oauth2callback():
         save_credentials_to_secret(credentials)
         return "<h1>Authorization successful!</h1><p>You can close this tab and return to Gemini.</p>"
     except Exception as e:
-        return f"<h1>Error during authorization:</h1><p>{e}</p>", 500
+        # This line will print the specific error to your Cloud Run logs.
+        print(f"An error occurred during token exchange or saving: {e}")
+        return f"<h1>Error during authorization:</h1><p>A server error occurred. Please check the logs.</p>", 500
 
 @app.route('/edit-markdown', methods=['POST'])
 def edit_markdown_file():
@@ -118,7 +108,6 @@ def edit_markdown_file():
         return jsonify({"error": "User not authenticated. Please visit the /authorize endpoint first."}), 401
 
     if credentials.expired and credentials.refresh_token:
-        from google.auth.transport.requests import Request
         credentials.refresh(Request())
         save_credentials_to_secret(credentials)
 
@@ -141,8 +130,6 @@ def edit_markdown_file():
                 'name': f"{file_name}.md",
                 'mimeType': 'text/markdown'
             }
-            from io import BytesIO
-            from googleapiclient.http import MediaIoBaseUpload
             fh = BytesIO(content_to_add.encode('utf-8'))
             media_body = MediaIoBaseUpload(fh, mimetype='text/markdown', resumable=True)
             created_file = service.files().create(
@@ -153,9 +140,6 @@ def edit_markdown_file():
             return jsonify({"success": True, "message": f"File '{created_file['name']}' did not exist and was created."})
 
         file_id = files[0]['id']
-
-        from io import BytesIO
-        from googleapiclient.http import MediaIoBaseUpload
 
         fh = BytesIO(content_to_add.encode('utf-8'))
         media_body = MediaIoBaseUpload(fh, mimetype='text/markdown', resumable=True)
@@ -168,7 +152,9 @@ def edit_markdown_file():
         return jsonify({"success": True, "message": f"Successfully updated '{updated_file['name']}'."})
 
     except Exception as e:
+        print(f"An error occurred during file operation: {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
+    # This block is for local testing only
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
