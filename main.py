@@ -14,7 +14,16 @@ PROJECT_ID = os.environ.get('GCP_PROJECT')
 
 # --- Flask App Initialization ---
 app = Flask(__name__)
+# --- DEBUGGING: PRINT ALL ENVIRONMENT VARIABLES ---
+print("--- ENVIRONMENT VARIABLES ---")
+import os
+for key, value in os.environ.items():
+    print(f"{key}: {value}")
+print("-----------------------------")
+# --- END DEBUGGING ---
 
+# --- Helper Functions ---
+def get_secret_manager_client():
 # --- Helper Functions ---
 def get_secret_manager_client():
     """Initializes the Secret Manager client."""
