@@ -1,23 +1,21 @@
-# Use the official Python 3.11 slim image as a base
-FROM python:3.11-slim
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
 
-# Set the working directory inside the container
-WORKDIR /app
+# Set environment variables
+ENV PYTHONUNBUFFERED TRUE
+ENV APP_HOME /app
+WORKDIR $APP_HOME
 
-# Set environment variables to prevent Python from buffering output
-ENV PYTHONUNBUFFERED True
-
-# Copy the requirements file into the container
+# Install dependencies
 COPY requirements.txt .
+RUN pip install -r requirements.txt
 
-# Install the Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application source code into the container
+# Copy local code to the container image
 COPY . .
 
-# Expose the port the app runs on
+# Service must listen to $PORT environment variable
+# This default is overwritten by Cloud Run
 EXPOSE 8080
 
-# The command to run the application using gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "main:app"]
+# Run the web service on container startup
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 main:app
