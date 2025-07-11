@@ -3,7 +3,6 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/hello-world-app:$COMMIT_SHA', '.']
 
-
   # 2. Push the image to Google's Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/hello-world-app:$COMMIT_SHA']
