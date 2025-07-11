@@ -1,0 +1,22 @@
+steps:
+  # 1. Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/hello-world-app:$COMMIT_SHA', '.']
+
+  # 2. Push the image to Google's Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/hello-world-app:$COMMIT_SHA']
+
+  # 3. Deploy the image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'hello-world-app'  # <-- MAKE SURE THIS IS YOUR SERVICE NAME
+      - '--image=gcr.io/$PROJECT_ID/hello-world-app:$COMMIT_SHA'
+      - '--region=us-west1' # <-- MAKE SURE THIS IS YOUR REGION
+      - '--allow-unauthenticated'
+# 4. Set the logging option to fix the error
+options:
+  logging: CLOUD_LOGGING_ONLY
