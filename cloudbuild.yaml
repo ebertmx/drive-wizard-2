@@ -14,9 +14,9 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - 'hello-world-app2'  # <-- MAKE SURE THIS IS YOUR SERVICE NAME
+      - 'hello-world-app'  # <-- MAKE SURE THIS IS YOUR SERVICE NAME
       - '--image=gcr.io/$PROJECT_ID/hello-world-app:$COMMIT_SHA'
-      - '--region=us-west1' # <-- MAKE SURE THIS IS YOUR REGION
+      - '--region=us-cenrtal1' # <-- MAKE SURE THIS IS YOUR REGION
       - '--allow-unauthenticated'
 # 4. Set the logging option to fix the error
 options:
