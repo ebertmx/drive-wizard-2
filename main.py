@@ -8,6 +8,11 @@ app = Flask(__name__)
 WORKSPACE_FOLDER_ID = "1kbgDJtcbuwPM5pL_2m_0m5KpuiCNpQMh"  # Replace with your actual folder ID
 
 
+def get_drive_service():
+    creds, _ = default(scopes=["https://www.googleapis.com/auth/drive"])
+    return build("drive", "v3", credentials=creds)
+
+    
 @app.route("/drive/read", methods=["POST"])
 def read_file():
     data = request.get_json()
