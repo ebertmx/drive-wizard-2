@@ -5,9 +5,8 @@ from googleapiclient.discovery import build
 
 app = Flask(__name__)
 
-def get_drive_service():
-    creds, _ = default(scopes=["https://www.googleapis.com/auth/drive"])
-    return build("drive", "v3", credentials=creds)
+WORKSPACE_FOLDER_ID = "1kbgDJtcbuwPM5pL_2m_0m5KpuiCNpQMh"  # Replace with your actual folder ID
+
 
 @app.route("/drive/read", methods=["POST"])
 def read_file():
@@ -20,20 +19,19 @@ def read_file():
     try:
         drive = get_drive_service()
 
-        # Search for file by name
+        # Search for file in specific folder only
         results = drive.files().list(
-            q=f"name = '{filename}' and trashed = false",
+            q=f"name = '{filename}' and trashed = false and '{WORKSPACE_FOLDER_ID}' in parents",
             fields="files(id, name)",
             pageSize=1
         ).execute()
 
         files = results.get("files", [])
         if not files:
-            return jsonify({"error": f"File '{filename}' not found"}), 404
+            return jsonify({"error": f"File '{filename}' not found in workspace"}), 404
 
         file_id = files[0]["id"]
 
-        # Download file content
         content = drive.files().get_media(fileId=file_id).execute()
 
         try:
@@ -48,6 +46,7 @@ def read_file():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @app.route("/")
 def hello():
