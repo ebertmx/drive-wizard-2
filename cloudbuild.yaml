@@ -3,7 +3,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build', '-t',
-      'us-west1-docker.pkg.dev/drive-wizard-2/docker-repo/drive-api-hello:$COMMIT_SHA',
+      'us-west1-docker.pkg.dev/drive-wizard-2-deployment/cloud-run-source-deploy/drive-api-hello:$COMMIT_SHA',
       '.'
     ]
 
@@ -11,20 +11,19 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'push',
-      'us-west1-docker.pkg.dev/drive-wizard-2/docker-repo/drive-api-hello:$COMMIT_SHA'
+      'us-west1-docker.pkg.dev/drive-wizard-2-deployment/cloud-run-source-deploy/drive-api-hello:$COMMIT_SHA'
     ]
 
-  # 3. Deploy the image to Cloud Run
+  # 3. Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
       - 'drive-api-hello'
-      - '--image=us-west1-docker.pkg.dev/drive-wizard-2/docker-repo/drive-api-hello:$COMMIT_SHA'
+      - '--image=us-west1-docker.pkg.dev/drive-wizard-2-deployment/cloud-run-source-deploy/drive-api-hello:$COMMIT_SHA'
       - '--region=us-west1'
       - '--allow-unauthenticated'
-      # Optional:
       # - '--service-account=drive-api-access@drive-wizard-2.iam.gserviceaccount.com'
 
 options:
