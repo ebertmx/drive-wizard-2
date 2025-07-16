@@ -24,6 +24,7 @@ steps:
       - '--image=us-west1-docker.pkg.dev/drive-wizard-2-deployment/cloud-run-source-deploy/drive-api-hello:$COMMIT_SHA'
       - '--region=us-west1'
       - '--allow-unauthenticated'
+      - '--service-account=drive-api-access@drive-wizard-2-deployment.iam.gserviceaccount.com'
       # - '--service-account=drive-api-access@drive-wizard-2.iam.gserviceaccount.com'
 
 options:
