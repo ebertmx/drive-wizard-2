@@ -1,17 +1,17 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/drive-api-hello:$COMMIT_SHA', '.']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/drive-wizard-2:$COMMIT_SHA', '.']
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/drive-api-hello:$COMMIT_SHA']
+    args: ['push', 'gcr.io/$PROJECT_ID/drive-wizard-2:$COMMIT_SHA']
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
-      - 'drive-api-hello'
-      - '--image=gcr.io/$PROJECT_ID/drive-api-hello:$COMMIT_SHA'
+      - 'drive-wizard-2'
+      - '--image=gcr.io/$PROJECT_ID/drive-wizard-2:$COMMIT_SHA'
       - '--region=us-central1'
       - '--allow-unauthenticated'
 
