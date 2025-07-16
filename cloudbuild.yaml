@@ -1,18 +1,31 @@
 steps:
+  # 1. Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/drive-wizard-2:$COMMIT_SHA', '.']
+    args: [
+      'build', '-t',
+      'us-west1-docker.pkg.dev/drive-wizard-2/docker-repo/drive-api-hello:$COMMIT_SHA',
+      '.'
+    ]
 
+  # 2. Push the image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/drive-wizard-2:$COMMIT_SHA']
+    args: [
+      'push',
+      'us-west1-docker.pkg.dev/drive-wizard-2/docker-repo/drive-api-hello:$COMMIT_SHA'
+    ]
 
+  # 3. Deploy the image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
-      - '${_SERVICE_NAME}'
-      - '--image=gcr.io/drive-wizard-2/${_SERVICE_NAME}:$COMMIT_SHA'
-      - '--region=${_DEPLOY_REGION}'
+      - 'drive-api-hello'
+      - '--image=us-west1-docker.pkg.dev/drive-wizard-2/docker-repo/drive-api-hello:$COMMIT_SHA'
+      - '--region=us-west1'
+      - '--allow-unauthenticated'
+      # Optional:
+      # - '--service-account=drive-api-access@drive-wizard-2.iam.gserviceaccount.com'
 
 options:
   logging: CLOUD_LOGGING_ONLY
