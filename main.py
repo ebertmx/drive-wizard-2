@@ -1,4 +1,5 @@
 import os
+import googleapiclient.http
 from flask import Flask, request, jsonify
 from google.auth import default
 from googleapiclient.discovery import build
@@ -12,7 +13,32 @@ def get_drive_service():
     creds, _ = default(scopes=["https://www.googleapis.com/auth/drive"])
     return build("drive", "v3", credentials=creds)
 
-    
+
+
+
+@app.route("/drive/list", methods=["GET"])
+def list_files():
+    try:
+        drive = get_drive_service()
+
+        results = drive.files().list(
+            q=f"'{WORKSPACE_FOLDER_ID}' in parents and trashed = false",
+            fields="files(id, name, modifiedTime, size)",
+            orderBy="modifiedTime desc",
+            pageSize=50
+        ).execute()
+
+        files = results.get("files", [])
+        return jsonify({
+            "count": len(files),
+            "files": files
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
 @app.route("/drive/read", methods=["POST"])
 def read_file():
     data = request.get_json()
@@ -51,6 +77,49 @@ def read_file():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/drive/write", methods=["POST"])
+def write_file():
+    data = request.get_json()
+    filename = data.get("filename")
+    content = data.get("content")
+
+    if not filename or content is None:
+        return jsonify({"error": "Missing 'filename' or 'content'"}), 400
+
+    try:
+        drive = get_drive_service()
+
+        # Check if file exists
+        results = drive.files().list(
+            q=f"name = '{filename}' and trashed = false and '{WORKSPACE_FOLDER_ID}' in parents",
+            fields="files(id)",
+            pageSize=1
+        ).execute()
+
+        files = results.get("files", [])
+        media = {'mimeType': 'text/plain'}
+
+        if files:
+            # File exists → update
+            file_id = files[0]["id"]
+            media_body = googleapiclient.http.MediaInMemoryUpload(content.encode("utf-8"), mimetype="text/plain")
+            drive.files().update(fileId=file_id, media_body=media_body).execute()
+            return jsonify({"status": "updated", "file_id": file_id})
+        else:
+            # File doesn't exist → create
+            file_metadata = {
+                "name": filename,
+                "parents": [WORKSPACE_FOLDER_ID]
+            }
+            media_body = googleapiclient.http.MediaInMemoryUpload(content.encode("utf-8"), mimetype="text/plain")
+            file = drive.files().create(body=file_metadata, media_body=media_body, fields="id").execute()
+            return jsonify({"status": "created", "file_id": file["id"]})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 @app.route("/")
