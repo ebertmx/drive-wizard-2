@@ -10,10 +10,9 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - 'drive-wizard-2'
-      - '--image=gcr.io/$PROJECT_ID/drive-wizard-2:$COMMIT_SHA'
-      - '--region=us-central1'
-      - '--allow-unauthenticated'
+      - '${_SERVICE_NAME}'
+      - '--image=gcr.io/drive-wizard-2/${_SERVICE_NAME}:$COMMIT_SHA'
+      - '--region=${_DEPLOY_REGION}'
 
 options:
   logging: CLOUD_LOGGING_ONLY
